@@ -14,12 +14,19 @@
 import pymongo
 from abc import abstractmethod
 
+from .migration_cli import Config
+
 
 class BaseMigration(object):
-    def __init__(self, config):
-        mongo_uri = 'mongodb://%s:%s'       # Current version supports only simple db mechanism.
+    def __init__(self, config: Config):
+        if config.username and config.password:
+            # use authenticated MongoDB URI
+            mongo_uri = f'mongodb://{config.username}:{config.password}@{config.host}:{config.port}'
+        else:
+            # use simple MongoDB URI
+            mongo_uri = f'mongodb://{config.host}:{config.port}'
 
-        client = pymongo.MongoClient(mongo_uri % (config.host, config.port))
+        client = pymongo.MongoClient(mongo_uri)
         self.db = client[config.database]
 
     @abstractmethod

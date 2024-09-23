@@ -15,6 +15,7 @@
 """
 import argparse
 from dataclasses import dataclass
+from typing import Optional
 
 from mongo_migrate.migration_manager import MigrationManager
 
@@ -24,6 +25,8 @@ class Config:
     host: str
     port: int
     database: str
+    username: Optional[str]
+    password: Optional[str]
 
 
 def subparser_for_create(subparsers):
@@ -31,10 +34,7 @@ def subparser_for_create(subparsers):
     create_subparser = subparsers.add_parser('create', help='create a new migration')
     create_subparser.set_defaults(func=create_migration)
 
-    create_subparser.add_argument('--host', help='the database host', action='store', dest='host')
-    create_subparser.add_argument('--port', help='the database port', action='store', dest='port')
-    create_subparser.add_argument('--database', help='the database name', action='store', dest='database')
-    create_subparser.add_argument('--migrations', help='provide the folder to store migrations. By default creates migrations/', default='migrations', action='store', dest='migrations')
+    _add_common_subparser_args(create_subparser)
     create_subparser.add_argument('--title', help='short title that will be used in the file name. Default: version', default='version', action='store', dest='title')
     create_subparser.add_argument('--message', help='short message that will be saved as a comment inside the migration file', required=True, action='store', dest='message')
 
@@ -51,10 +51,7 @@ def subparser_for_upgrade(subparsers):
     upgrade_subparser = subparsers.add_parser('upgrade', help='upgrade the database to the target migration version')
     upgrade_subparser.set_defaults(func=migrate)
 
-    upgrade_subparser.add_argument('--host', help='the database host', action='store', dest='host')
-    upgrade_subparser.add_argument('--port', help='the database port', action='store', dest='port')
-    upgrade_subparser.add_argument('--database', help='the database name', action='store', dest='database')
-    upgrade_subparser.add_argument('--migrations', help='provide the folder to store migrations. By default looks for migrations/', default='migrations', action='store', dest='migrations')
+    _add_common_subparser_args(upgrade_subparser)
     upgrade_subparser.add_argument('--upto', help='target migration timestamp', action='store', dest='upto')
     upgrade_subparser.add_argument('--type', help=argparse.SUPPRESS, action='store', dest='type', default='upgrade')
 
@@ -64,17 +61,23 @@ def subparser_for_downgrade(subparsers):
     upgrade_subparser = subparsers.add_parser('downgrade', help='downgrade the database to the target migration version')
     upgrade_subparser.set_defaults(func=migrate)
 
-    upgrade_subparser.add_argument('--host', help='the database host', action='store', dest='host')
-    upgrade_subparser.add_argument('--port', help='the database port', action='store', dest='port')
-    upgrade_subparser.add_argument('--database', help='the database name', action='store', dest='database')
-    upgrade_subparser.add_argument('--migrations', help='provide the folder to store migrations. By default looks for migrations/', default='migrations', action='store', dest='migrations')
+    _add_common_subparser_args(upgrade_subparser)
     upgrade_subparser.add_argument('--upto', help='target migration timestamp', action='store', dest='upto')
     upgrade_subparser.add_argument('--type', help=argparse.SUPPRESS, action='store', dest='type', default='downgrade')
+
+    
+def _add_common_subparser_args(subparser: argparse.ArgumentParser):
+    subparser.add_argument('--host', help='the database host', action='store', dest='host')
+    subparser.add_argument('--port', help='the database port', action='store', dest='port')
+    subparser.add_argument('--username', help='the database username', action='store', dest='username', default=None)
+    subparser.add_argument('--password', help='the database password', action='store', dest='password', default=None)
+    subparser.add_argument('--database', help='the database name', action='store', dest='database')
+    subparser.add_argument('--migrations', help='provide the folder to store migrations. By default looks for migrations/', default='migrations', action='store', dest='migrations')
 
 
 def migrate(args):
     """Entry point for both upgrade and downgrade"""
-    config = Config(args.host, args.port, args.database)
+    config = Config(args.host, args.port, args.database, args.username, args.password)
     m = MigrationManager(config, args.migrations)
     m.migrate(args.type, args.upto)
 
