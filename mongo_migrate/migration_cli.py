@@ -14,19 +14,9 @@
     
 """
 import argparse
-from dataclasses import dataclass
-from typing import Optional
 
 from mongo_migrate.migration_manager import MigrationManager
-
-
-@dataclass
-class Config:
-    host: str
-    port: int
-    database: str
-    username: Optional[str]
-    password: Optional[str]
+from mongo_migrate.config import Config
 
 
 def subparser_for_create(subparsers):

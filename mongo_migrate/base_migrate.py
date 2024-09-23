@@ -14,7 +14,7 @@
 import pymongo
 from abc import abstractmethod
 
-from .migration_cli import Config
+from mongo_migrate.config import Config
 
 
 class BaseMigration(object):
